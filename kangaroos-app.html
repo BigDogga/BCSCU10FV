@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kangaroos">
+<title>🦘 BCSC Kangaroos U10</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root {
+  --blue:#003087;--blue-mid:#0044b8;--red:#C8102E;--white:#ffffff;
+  --grey:#8a97b8;--dark:#001240;--gold:#FFD700;--silver:#C0C0C0;--bronze:#CD7F32;--green:#00b341;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Barlow',sans-serif;background:var(--dark);color:var(--white);min-height:100dvh;max-width:430px;margin:0 auto;overflow-x:hidden;}
+.header{background:var(--blue);padding:52px 20px 16px;position:sticky;top:0;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,0.4);}
+.header-inner{display:flex;align-items:center;gap:12px;}
+.header-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;line-height:1;}
+.header-logo span{color:var(--red);}
+.header-sub{font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+.conn-dot{width:10px;height:10px;border-radius:50%;background:var(--grey);display:inline-block;margin-right:6px;transition:background 0.3s;}
+.conn-dot.live{background:var(--green);box-shadow:0 0 8px var(--green);}
+.conn-label{font-size:11px;color:rgba(255,255,255,0.5);}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--blue);display:flex;border-top:2px solid rgba(255,255,255,0.1);z-index:200;padding-bottom:env(safe-area-inset-bottom,0px);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;border:none;background:none;color:rgba(255,255,255,0.45);}
+.nav-btn.active{color:var(--white);}
+.nav-btn.active .nav-icon{background:var(--red);}
+.nav-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:4px;background:transparent;transition:background 0.2s;}
+.nav-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;}
+.page{display:none;padding:16px 16px 100px;animation:fadeUp 0.2s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.section-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;margin-bottom:4px;}
+.section-sub{font-size:13px;color:var(--grey);margin-bottom:16px;}
+.stats-strip{display:flex;gap:8px;margin-bottom:16px;}
+.stat-box{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 8px;text-align:center;}
+.stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;line-height:1;}
+.stat-lbl{font-size:10px;color:var(--grey);letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+.stat-w{color:var(--green);}.stat-l{color:var(--red);}.stat-d{color:var(--gold);}
+.lb-row{display:flex;align-items:center;padding:10px 14px;border-radius:12px;margin-bottom:6px;gap:12px;animation:slideIn 0.3s ease both;}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:translateX(0);}}
+.lb-medal{font-size:20px;width:28px;text-align:center;flex-shrink:0;}
+.lb-name{font-weight:600;font-size:15px;flex:1;}
+.lb-pts{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;}
+.lb-pts-label{font-size:10px;color:rgba(255,255,255,0.5);text-align:right;letter-spacing:1px;}
+.lb-detail{display:flex;gap:5px;margin-top:2px;flex-wrap:wrap;}
+.lb-pip{font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);}
+.lb-1{background:linear-gradient(135deg,#3a2e00,#1a1500);border:1px solid var(--gold);}
+.lb-2{background:linear-gradient(135deg,#1e1e1e,#111);border:1px solid var(--silver);}
+.lb-3{background:linear-gradient(135deg,#2a1800,#150c00);border:1px solid var(--bronze);}
+.lb-other{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);}
+.fixture-row{display:flex;align-items:center;padding:12px 14px;border-radius:12px;margin-bottom:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);gap:10px;cursor:pointer;transition:background 0.15s;}
+.fixture-row:active{background:rgba(255,255,255,0.1);}
+.fixture-row.played{border-left:3px solid var(--green);}
+.rnd-badge{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;background:var(--blue);color:var(--white);padding:3px 7px;border-radius:6px;flex-shrink:0;}
+.fixture-opp{font-weight:600;font-size:15px;}
+.fixture-meta{font-size:12px;color:var(--grey);margin-top:1px;}
+.fixture-score{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;text-align:right;flex-shrink:0;}
+.score-w{color:var(--green);}.score-l{color:var(--red);}.score-d{color:var(--gold);}.score-tbc{color:var(--grey);font-size:12px;}
+.round-selector{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;scrollbar-width:none;}
+.round-selector::-webkit-scrollbar{display:none;}
+.rnd-pill{flex-shrink:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;padding:6px 12px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);cursor:pointer;background:transparent;}
+.rnd-pill.active{background:var(--red);border-color:var(--red);color:var(--white);}
+.rnd-pill.has-votes{border-color:var(--green);color:var(--green);}
+.vote-player-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;margin-bottom:10px;}
+.vpc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.vpc-name{font-weight:600;font-size:15px;}
+.toggle{width:44px;height:26px;background:rgba(255,255,255,0.15);border-radius:13px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+.toggle.on{background:var(--green);}
+.toggle::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:white;top:3px;left:3px;transition:transform 0.2s;}
+.toggle.on::after{transform:translateX(18px);}
+.vote-btns{display:flex;gap:6px;}
+.vote-btn{flex:1;padding:8px 4px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;text-align:center;}
+.vote-btn.sel-1st{background:var(--gold);border-color:var(--gold);color:#000;}
+.vote-btn.sel-2nd{background:var(--silver);border-color:var(--silver);color:#000;}
+.vote-btn.sel-3rd{background:var(--bronze);border-color:var(--bronze);color:#000;}
+.vote-btn.sel-4th{background:var(--blue-mid);border-color:var(--blue-mid);color:#fff;}
+.vote-btn.sel-5th{background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.5);color:#fff;}
+.goals-row{display:flex;align-items:center;margin-top:10px;gap:10px;}
+.goals-label{font-size:12px;color:var(--grey);}
+.goals-ctrl{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.goals-btn{width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.2);background:transparent;color:white;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.goals-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;width:28px;text-align:center;}
+.save-btn{width:100%;padding:16px;border-radius:14px;border:none;background:var(--red);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;margin-top:12px;transition:opacity 0.15s;}
+.save-btn:active{opacity:0.8;}
+.player-row{display:flex;align-items:center;padding:12px 14px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);gap:12px;}
+.player-num{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;width:32px;text-align:center;color:var(--grey);flex-shrink:0;}
+.player-name{font-weight:600;font-size:15px;flex:1;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#0a1a3a;border:1px solid rgba(255,255,255,0.15);border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:430px;animation:slideUp 0.25s ease;position:relative;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--grey);margin-bottom:20px;}
+.modal-close{position:absolute;top:16px;right:20px;font-size:22px;cursor:pointer;background:none;border:none;color:white;}
+.result-row{display:flex;gap:10px;margin-bottom:12px;}
+.result-btn{flex:1;padding:14px;border-radius:12px;border:2px solid rgba(255,255,255,0.15);background:transparent;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;cursor:pointer;}
+.result-btn.sel-w{background:var(--green);border-color:var(--green);}
+.result-btn.sel-l{background:var(--red);border-color:var(--red);}
+.result-btn.sel-d{background:var(--gold);border-color:var(--gold);color:#000;}
+.score-inputs{display:flex;align-items:center;gap:12px;margin:16px 0;}
+.score-input-wrap{flex:1;text-align:center;}
+.score-input-label{font-size:12px;color:var(--grey);margin-bottom:6px;}
+.score-input{width:100%;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);border-radius:10px;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:32px;text-align:center;padding:10px;}
+.score-vs{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;color:var(--grey);}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;color:var(--grey);font-size:14px;}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top-color:#0055e0;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast{position:fixed;top:100px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--green);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;padding:10px 20px;border-radius:20px;z-index:1000;opacity:0;transition:all 0.3s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.error{background:var(--red);}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
+input[type=number]{-moz-appearance:textfield;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div style="font-size:28px">🦘</div>
+    <div>
+      <div class="header-logo">BCSC <span>KANGAROOS</span></div>
+      <div class="header-sub">FV U10 · 2026</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center">
+      <span class="conn-dot" id="connDot"></span>
+      <span class="conn-label" id="connLabel">Connecting…</span>
+    </div>
+  </div>
+</div>
+
+<div id="page-leaderboard" class="page active">
+  <div class="section-title">Leaderboard</div>
+  <div class="section-sub">Best &amp; Fairest · Season 2026</div>
+  <div id="lb-stats" class="stats-strip"></div>
+  <div id="lb-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+</div>
+
+<div id="page-fixture" class="page">
+  <div class="section-title">Fixture</div>
+  <div class="section-sub">Tap a game to enter result</div>
+  <div id="fixture-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+</div>
+
+<div id="page-votes" class="page">
+  <div class="section-title">Vote Entry</div>
+  <div class="section-sub">Select round then enter votes</div>
+  <div class="round-selector" id="round-selector"></div>
+  <div id="vote-players"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  <button class="save-btn" id="save-votes-btn" style="display:none" onclick="saveVotes()">💾 Save Votes</button>
+</div>
+
+<div id="page-squad" class="page">
+  <div class="section-title">Squad</div>
+  <div class="section-sub">BCSC FV U10 Kangaroos · 2026</div>
+  <div id="squad-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('leaderboard',this)">
+    <div class="nav-icon">🏆</div><div class="nav-label">Leaderboard</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('fixture',this)">
+    <div class="nav-icon">📅</div><div class="nav-label">Fixture</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('votes',this)">
+    <div class="nav-icon">🗳️</div><div class="nav-label">Votes</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('squad',this)">
+    <div class="nav-icon">👕</div><div class="nav-label">Squad</div>
+  </button>
+</nav>
+
+<div class="modal-overlay" id="resultModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Enter Result</div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="result-row">
+      <button class="result-btn" id="rb-w" onclick="selectResult('W')">WIN</button>
+      <button class="result-btn" id="rb-d" onclick="selectResult('D')">DRAW</button>
+      <button class="result-btn" id="rb-l" onclick="selectResult('L')">LOSS</button>
+    </div>
+    <div class="score-inputs">
+      <div class="score-input-wrap">
+        <div class="score-input-label">BCSC Goals</div>
+        <input class="score-input" type="number" id="gf-input" min="0" value="0">
+      </div>
+      <div class="score-vs">–</div>
+      <div class="score-input-wrap">
+        <div class="score-input-label">Opposition</div>
+        <input class="score-input" type="number" id="ga-input" min="0" value="0">
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveResult()">Save Result</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var PLAYERS=["Bimalesh Joshi","Brandon Kapushka","Cedric Skey","Farzam Buniadi","Flynn Mootohoosawmy","Harvey Prins","Hudson Prins","Iziah Tonumaipe'a","Otis Westwood","Rafferty Westwood","Reuben Lazer","William Chitty-Bernetzke"];
+var FIXTURE=[
+  {rnd:1,date:"25/04/2026",opp:"Langwarrin",ha:"Away",time:"9:00 AM"},
+  {rnd:2,date:"02/05/2026",opp:"Endeavour United",ha:"Home",time:"9:00 AM"},
+  {rnd:3,date:"09/05/2026",opp:"Cranbourne United",ha:"Away",time:"9:00 AM"},
+  {rnd:4,date:"16/05/2026",opp:"Skye United FC",ha:"Home",time:"9:00 AM"},
+  {rnd:5,date:"23/05/2026",opp:"Rosebud Heart",ha:"Away",time:"9:30 AM"},
+  {rnd:6,date:"30/05/2026",opp:"Mount Eliza",ha:"Away",time:"9:00 AM"},
+  {rnd:7,date:"13/06/2026",opp:"Glen Eira FC",ha:"Home",time:"9:00 AM"},
+  {rnd:8,date:"20/06/2026",opp:"Baxter",ha:"Away",time:"11:00 AM"},
+  {rnd:9,date:"27/06/2026",opp:"Berwick City",ha:"Home",time:"9:00 AM"},
+  {rnd:10,date:"11/07/2026",opp:"Langwarrin",ha:"Home",time:"9:00 AM"},
+  {rnd:11,date:"18/07/2026",opp:"Endeavour United",ha:"Away",time:"10:00 AM"},
+  {rnd:12,date:"25/07/2026",opp:"Cranbourne United",ha:"Home",time:"9:00 AM"},
+  {rnd:13,date:"01/08/2026",opp:"Skye United FC",ha:"Away",time:"10:15 AM"},
+  {rnd:14,date:"08/08/2026",opp:"Rosebud Heart",ha:"Home",time:"9:00 AM"},
+  {rnd:15,date:"15/08/2026",opp:"Mount Eliza",ha:"Away",time:"9:00 AM"},
+  {rnd:16,date:"22/08/2026",opp:"Glen Eira FC",ha:"Away",time:"9:00 AM"},
+  {rnd:17,date:"29/08/2026",opp:"Baxter",ha:"Home",time:"9:00 AM"},
+  {rnd:18,date:"05/09/2026",opp:"Berwick City",ha:"Away",time:"11:00 AM"}
+];
+
+firebase.initializeApp({
+  apiKey:"AIzaSyCVthfbsquomLwQfz9vQLZaTS21heYp6jk",
+  authDomain:"bcsc-fvu10.firebaseapp.com",
+  databaseURL:"https://bcsc-fvu10-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"bcsc-fvu10",
+  storageBucket:"bcsc-fvu10.firebasestorage.app",
+  messagingSenderId:"421526522653",
+  appId:"1:421526522653:web:1dd14c873f66f339e72ff4"
+});
+var db=firebase.database();
+
+var state={fixture:{},votes:{}};
+var selectedRound=1,modalRound=null,selectedResult=null,pendingVotes={};
+
+function safeName(n){return n.replace(/[^a-zA-Z0-9]/g,'_');}
+
+function initDB(){
+  db.ref('fixture').once('value',function(snap){
+    if(!snap.exists()){
+      var fd={};
+      FIXTURE.forEach(function(f){fd['rnd'+f.rnd]={rnd:f.rnd,date:f.date,opp:f.opp,ha:f.ha,time:f.time,result:null,gf:null,ga:null};});
+      db.ref('fixture').set(fd);
+      db.ref('votes').set({});
+    }
+  });
+}
+
+db.ref('/').on('value',function(snap){
+  var d=snap.val()||{};
+  state.fixture=d.fixture||{};
+  state.votes=d.votes||{};
+  document.getElementById('connDot').classList.add('live');
+  document.getElementById('connLabel').textContent='Live';
+  renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
+},function(e){
+  document.getElementById('connDot').classList.remove('live');
+  document.getElementById('connLabel').textContent='Offline';
+  console.error(e);
+});
+
+function calcStats(){
+  var s={};
+  PLAYERS.forEach(function(p){s[p]={name:p,pts:0,v1:0,v2:0,v3:0,v4:0,v5:0,goals:0,games:0};});
+  Object.keys(state.votes).forEach(function(rk){
+    Object.keys(state.votes[rk]||{}).forEach(function(pk){
+      var v=state.votes[rk][pk],n=v.name||'';
+      if(!s[n])return;
+      if(v.attend)s[n].games++;
+      if(v.goals)s[n].goals+=Number(v.goals);
+      if(v.vote==='1st'){s[n].v1++;s[n].pts+=5;}
+      if(v.vote==='2nd'){s[n].v2++;s[n].pts+=4;}
+      if(v.vote==='3rd'){s[n].v3++;s[n].pts+=3;}
+      if(v.vote==='4th'){s[n].v4++;s[n].pts+=2;}
+      if(v.vote==='5th'){s[n].v5++;s[n].pts+=1;}
+    });
+  });
+  return Object.values(s).sort(function(a,b){return b.pts-a.pts||b.v1-a.v1||b.v2-a.v2||b.v3-a.v3||a.name.localeCompare(b.name);});
+}
+
+function renderLeaderboard(){
+  var sorted=calcStats();
+  var med=['🥇','🥈','🥉'],cls=['lb-1','lb-2','lb-3'];
+  var w=0,l=0,d=0,gf=0;
+  Object.values(state.fixture).forEach(function(f){
+    if(f.result==='W')w++;else if(f.result==='L')l++;else if(f.result==='D')d++;
+    if(f.gf)gf+=Number(f.gf);
+  });
+  document.getElementById('lb-stats').innerHTML=
+    '<div class="stat-box"><div class="stat-val stat-w">'+w+'</div><div class="stat-lbl">Wins</div></div>'+
+    '<div class="stat-box"><div class="stat-val stat-l">'+l+'</div><div class="stat-lbl">Losses</div></div>'+
+    '<div class="stat-box"><div class="stat-val stat-d">'+d+'</div><div class="stat-lbl">Draws</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+gf+'</div><div class="stat-lbl">Goals</div></div>';
+  var html='';
+  sorted.forEach(function(p,i){
+    var r=i+1,c=r<=3?cls[i]:'lb-other',m=r<=3?med[i]:'<span style="font-family:\'Barlow Condensed\';font-weight:900;font-size:16px;color:var(--grey)">'+r+'</span>';
+    html+='<div class="lb-row '+c+'" style="animation-delay:'+(i*0.04)+'s">'+
+      '<div class="lb-medal">'+m+'</div>'+
+      '<div style="flex:1"><div class="lb-name">'+p.name+'</div>'+
+      '<div class="lb-detail"><span class="lb-pip">🥇 '+p.v1+'</span><span class="lb-pip">🥈 '+p.v2+'</span><span class="lb-pip">🥉 '+p.v3+'</span><span class="lb-pip">⚽ '+p.goals+'</span><span class="lb-pip">'+p.games+' gms</span></div></div>'+
+      '<div style="text-align:right"><div class="lb-pts">'+p.pts+'</div><div class="lb-pts-label">PTS</div></div></div>';
+  });
+  document.getElementById('lb-list').innerHTML=html||'<div style="text-align:center;padding:40px;color:var(--grey)">No votes yet</div>';
+}
+
+function renderFixture(){
+  var fix=state.fixture;
+  if(!fix||!Object.keys(fix).length)return;
+  var sorted=Object.values(fix).sort(function(a,b){return a.rnd-b.rnd;});
+  var html='';
+  sorted.forEach(function(f){
+    var sh='',rc='';
+    if(f.result){
+      var sc=(f.gf||0)+' – '+(f.ga||0);
+      rc=f.result==='W'?'score-w':f.result==='L'?'score-l':'score-d';
+      sh='<div class="fixture-score '+rc+'">'+sc+'<div style="font-size:11px;font-weight:700">'+f.result+'</div></div>';
+    }else{sh='<div class="score-tbc">'+f.time+'</div>';}
+    html+='<div class="fixture-row'+(f.result?' played':'')+'" onclick="openResultModal('+f.rnd+')">'+
+      '<div class="rnd-badge">R'+f.rnd+'</div>'+
+      '<div style="flex:1"><div class="fixture-opp">'+f.opp+'</div><div class="fixture-meta">'+f.date+' · '+f.ha+'</div></div>'+
+      sh+'</div>';
+  });
+  document.getElementById('fixture-list').innerHTML=html;
+}
+
+function renderVotesRoundSelector(){
+  var html='';
+  FIXTURE.forEach(function(f){
+    var rk='rnd'+f.rnd,hv=state.votes[rk]&&Object.keys(state.votes[rk]).length>0;
+    var ac=f.rnd===selectedRound?'active':(hv?'has-votes':'');
+    html+='<button class="rnd-pill '+ac+'" onclick="selectRound('+f.rnd+')">R'+f.rnd+'</button>';
+  });
+  document.getElementById('round-selector').innerHTML=html;
+}
+
+function selectRound(rnd){selectedRound=rnd;pendingVotes={};renderVotesRoundSelector();renderVotePlayers();}
+
+function renderVotePlayers(){
+  var rk='rnd'+selectedRound,saved=state.votes[rk]||{},fix=state.fixture[rk]||FIXTURE[selectedRound-1]||{};
+  document.getElementById('save-votes-btn').style.display='block';
+  var cur={};
+  PLAYERS.forEach(function(p){
+    var pk=safeName(p),sv=saved[pk]||{},pv=pendingVotes[pk]||{};
+    cur[pk]={name:p,attend:pv.attend!==undefined?pv.attend:(sv.attend||false),vote:pv.vote!==undefined?pv.vote:(sv.vote||null),goals:pv.goals!==undefined?pv.goals:(sv.goals||0)};
+  });
+  var opp=fix.opp?'vs '+fix.opp+' ('+fix.ha+')':'Round '+selectedRound;
+  var html='<div style="font-family:\'Barlow Condensed\';font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:12px">'+opp+' · '+(fix.date||'')+'</div>';
+  PLAYERS.forEach(function(p){
+    var pk=safeName(p),c=cur[pk];
+    var vb=['1st','2nd','3rd','4th','5th'].map(function(v){
+      return '<button class="vote-btn'+(c.vote===v?' sel-'+v:'')+'" onclick="toggleVote(\''+pk+'\',\''+v+'\')">'+v+'</button>';
+    }).join('');
+    html+='<div class="vote-player-card">'+
+      '<div class="vpc-header"><div class="vpc-name">'+p+'</div>'+
+      '<div style="display:flex;align-items:center"><span style="font-size:12px;color:var(--grey);margin-right:8px">Played</span>'+
+      '<div class="toggle'+(c.attend?' on':'')+'" onclick="toggleAttend(\''+pk+'\')"></div></div></div>'+
+      '<div class="vote-btns">'+vb+'</div>'+
+      '<div class="goals-row"><span class="goals-label">⚽ Goals</span>'+
+      '<div class="goals-ctrl"><button class="goals-btn" onclick="adjGoals(\''+pk+'\',-1)">−</button>'+
+      '<div class="goals-val" id="goals-'+pk+'">'+(c.goals||0)+'</div>'+
+      '<button class="goals-btn" onclick="adjGoals(\''+pk+'\',1)">+</button></div></div></div>';
+  });
+  document.getElementById('vote-players').innerHTML=html;
+}
+
+function toggleAttend(pk){
+  if(!pendingVotes[pk])pendingVotes[pk]={};
+  var rk='rnd'+selectedRound,cur=pendingVotes[pk].attend!==undefined?pendingVotes[pk].attend:((state.votes[rk]&&state.votes[rk][pk])?state.votes[rk][pk].attend:false);
+  pendingVotes[pk].attend=!cur;renderVotePlayers();
+}
+
+function toggleVote(pk,v){
+  if(!pendingVotes[pk])pendingVotes[pk]={};
+  var rk='rnd'+selectedRound,cur=pendingVotes[pk].vote!==undefined?pendingVotes[pk].vote:((state.votes[rk]&&state.votes[rk][pk])?state.votes[rk][pk].vote:null);
+  var conflict=false;
+  PLAYERS.forEach(function(p2){
+    var opk=safeName(p2);if(opk===pk)return;
+    var ov=pendingVotes[opk]&&pendingVotes[opk].vote!==undefined?pendingVotes[opk].vote:((state.votes[rk]&&state.votes[rk][opk])?state.votes[rk][opk].vote:null);
+    if(ov===v)conflict=true;
+  });
+  if(conflict){showToast(v+' already assigned!',true);return;}
+  pendingVotes[pk].vote=(cur===v)?null:v;renderVotePlayers();
+}
+
+function adjGoals(pk,delta){
+  if(!pendingVotes[pk])pendingVotes[pk]={};
+  var rk='rnd'+selectedRound,cur=pendingVotes[pk].goals!==undefined?pendingVotes[pk].goals:((state.votes[rk]&&state.votes[rk][pk])?(state.votes[rk][pk].goals||0):0);
+  pendingVotes[pk].goals=Math.max(0,Number(cur)+delta);
+  var el=document.getElementById('goals-'+pk);if(el)el.textContent=pendingVotes[pk].goals;
+}
+
+function saveVotes(){
+  if(!Object.keys(pendingVotes).length){showToast('No changes to save',true);return;}
+  var rk='rnd'+selectedRound,existing=state.votes[rk]||{},updates={};
+  PLAYERS.forEach(function(p){
+    var pk=safeName(p),sv=existing[pk]||{},pv=pendingVotes[pk]||{};
+    updates['votes/'+rk+'/'+pk]={name:p,attend:pv.attend!==undefined?pv.attend:(sv.attend||false),vote:pv.vote!==undefined?pv.vote:(sv.vote||null),goals:pv.goals!==undefined?Number(pv.goals):(Number(sv.goals)||0)};
+  });
+  db.ref().update(updates,function(err){
+    if(err)showToast('Save failed ✗',true);
+    else{pendingVotes={};showToast('Votes saved ✓');}
+  });
+}
+
+function openResultModal(rnd){
+  modalRound=rnd;selectedResult=null;
+  var rk='rnd'+rnd,fix=state.fixture[rk]||{};
+  document.getElementById('modal-title').textContent='Round '+rnd+' Result';
+  document.getElementById('modal-sub').textContent='vs '+fix.opp+' · '+fix.date;
+  document.getElementById('gf-input').value=fix.gf!=null?fix.gf:0;
+  document.getElementById('ga-input').value=fix.ga!=null?fix.ga:0;
+  ['W','D','L'].forEach(function(r){document.getElementById('rb-'+r.toLowerCase()).className='result-btn'+(fix.result===r?' sel-'+r.toLowerCase():'');});
+  selectedResult=fix.result||null;
+  document.getElementById('resultModal').classList.add('open');
+}
+function closeModal(){document.getElementById('resultModal').classList.remove('open');}
+function selectResult(r){
+  selectedResult=r;
+  ['W','D','L'].forEach(function(x){document.getElementById('rb-'+x.toLowerCase()).className='result-btn'+(x===r?' sel-'+x.toLowerCase():'');});
+}
+function saveResult(){
+  if(!selectedResult){showToast('Select W / D / L first',true);return;}
+  var rk='rnd'+modalRound,gf=parseInt(document.getElementById('gf-input').value)||0,ga=parseInt(document.getElementById('ga-input').value)||0;
+  db.ref('fixture/'+rk).update({result:selectedResult,gf:gf,ga:ga},function(err){
+    if(err)showToast('Save failed ✗',true);else{closeModal();showToast('Result saved ✓');}
+  });
+}
+
+function renderSquad(){
+  var sm={};calcStats().forEach(function(s){sm[s.name]=s;});
+  var html='';
+  PLAYERS.forEach(function(p,i){
+    var s=sm[p]||{};
+    html+='<div class="player-row"><div class="player-num">'+(i+1)+'</div>'+
+      '<div style="flex:1"><div class="player-name">'+p+'</div><div style="font-size:12px;color:var(--grey);margin-top:2px">'+(s.games||0)+' games · ⚽ '+(s.goals||0)+' goals</div></div>'+
+      '<div style="text-align:right"><div style="font-family:\'Barlow Condensed\';font-weight:900;font-size:20px">'+(s.pts||0)+'</div><div style="font-size:10px;color:var(--grey)">PTS</div></div></div>';
+  });
+  document.getElementById('squad-list').innerHTML=html;
+}
+
+function showToast(msg,err){
+  var t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' error':'');
+  setTimeout(function(){t.classList.add('show');},10);setTimeout(function(){t.classList.remove('show');},2400);
+}
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');
+}
+
+initDB();
+</script>
+</body>
+</html>
