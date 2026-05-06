@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BCSC Coach App Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue:      #003087;
+    --blue-mid:  #0044b8;
+    --blue-light:#e8f0ff;
+    --red:       #C8102E;
+    --white:     #ffffff;
+    --off-white: #f5f7fc;
+    --grey:      #6b7a99;
+    --dark:      #001240;
+    --gold:      #FFD700;
+    --green:     #00a83a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--off-white);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    background: var(--blue);
+    padding: 56px 40px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 30px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(200,16,46,0.15);
+  }
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--red);
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+  .cover-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 52px;
+    line-height: 1;
+    color: white;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+  }
+  .cover-title span { color: var(--gold); }
+  .cover-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 32px;
+    font-weight: 500;
+  }
+  .cover-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .link-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 10px 16px;
+  }
+  .link-team {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    color: white;
+    width: 120px;
+    flex-shrink: 0;
+  }
+  .link-url {
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  /* ── BODY ── */
+  .body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 32px 60px;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 36px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--blue-light);
+  }
+  .section-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 13px;
+    background: var(--blue);
+    color: white;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+  }
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.3px;
+    color: var(--blue);
+  }
+
+  /* ── STEPS ── */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: white;
+    border: 1px solid #dde4f5;
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .step-icon {
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--blue-light);
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .step-body { flex: 1; }
+  .step-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--dark);
+    margin-bottom: 3px;
+  }
+  .step-desc {
+    font-size: 13px;
+    color: var(--grey);
+    line-height: 1.5;
+  }
+  .step-desc strong { color: var(--dark); font-weight: 600; }
+
+  /* ── TAB GRID ── */
+  .tab-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .tab-card {
+    background: white;
+    border: 1px solid #dde4f5;
+    border-radius: 12px;
+    padding: 16px;
+    border-top: 3px solid var(--blue);
+  }
+  .tab-card.red { border-top-color: var(--red); }
+  .tab-card.green { border-top-color: var(--green); }
+  .tab-card.gold { border-top-color: var(--gold); }
+  .tab-icon { font-size: 24px; margin-bottom: 8px; }
+  .tab-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--blue);
+    margin-bottom: 5px;
+  }
+  .tab-card.red .tab-name { color: var(--red); }
+  .tab-card.green .tab-name { color: var(--green); }
+  .tab-card.gold .tab-name { color: #b8960a; }
+  .tab-desc {
+    font-size: 12px;
+    color: var(--grey);
+    line-height: 1.5;
+  }
+
+  /* ── VOTE TABLE ── */
+  .vote-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #dde4f5;
+  }
+  .vote-table th {
+    background: var(--blue);
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+  }
+  .vote-table td {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-bottom: 1px solid #eef1fa;
+    vertical-align: middle;
+  }
+  .vote-table tr:last-child td { border-bottom: none; }
+  .vote-table tr:nth-child(even) td { background: var(--off-white); }
+  .medal { font-size: 16px; }
+  .pts-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--blue);
+  }
+
+  /* ── TIP BOX ── */
+  .tip {
+    display: flex;
+    gap: 12px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-left: 4px solid var(--gold);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .tip-icon { font-size: 18px; flex-shrink: 0; }
+  .tip-text { font-size: 13px; color: #5a4a00; line-height: 1.5; }
+  .tip-text strong { font-weight: 600; }
+
+  .note {
+    display: flex;
+    gap: 12px;
+    background: var(--blue-light);
+    border: 1px solid #c5d5f5;
+    border-left: 4px solid var(--blue);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .note-text { font-size: 13px; color: var(--dark); line-height: 1.5; }
+  .note-text strong { font-weight: 600; color: var(--blue); }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--dark);
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+  }
+  .footer strong { color: white; }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: white; }
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .section-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .vote-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tab-card { break-inside: avoid; }
+    .step { break-inside: avoid; }
+  }
+
+  @media (max-width: 600px) {
+    .cover { padding: 36px 20px 32px; }
+    .cover-title { font-size: 36px; }
+    .body { padding: 24px 16px 40px; }
+    .tab-grid { grid-template-columns: 1fr; }
+    .link-row { flex-direction: column; gap: 4px; }
+    .link-team { width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-badge">🦘 BCSC · Season 2026</div>
+  <div class="cover-title">COACH<br><span>APP GUIDE</span></div>
+  <div class="cover-sub">Best & Fairest · Results · Live Sync</div>
+
+  <div class="cover-links">
+    <div class="link-row">
+      <div class="link-team">⚽ U10 Kangaroos</div>
+      <div class="link-url">bigdogga.github.io/BCSCU10FV/kangaroos-app.html</div>
+    </div>
+    <div class="link-row">
+      <div class="link-team">🦘 U8 Wallabies</div>
+      <div class="link-url">bigdogga.github.io/BCSCU10FV/wallabies-app.html</div>
+    </div>
+    <div class="link-row">
+      <div class="link-team">🔵 U12 Juniors B</div>
+      <div class="link-url">bigdogga.github.io/BCSCU10FV/u12b-app.html</div>
+    </div>
+  </div>
+</div>
+
+<div class="body">
+
+  <!-- SECTION 1: GETTING STARTED -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-title">Getting Started — Add to Your iPhone</div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon">🔗</div>
+        <div class="step-body">
+          <div class="step-title">Open your team's link in Safari</div>
+          <div class="step-desc">Use the URL for your team above. <strong>Must be Safari</strong> — Chrome won't allow adding to home screen on iPhone.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">📤</div>
+        <div class="step-body">
+          <div class="step-title">Tap the Share button</div>
+          <div class="step-desc">The share icon is at the bottom of Safari — it looks like a box with an arrow pointing up.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">➕</div>
+        <div class="step-body">
+          <div class="step-title">Tap "Add to Home Screen"</div>
+          <div class="step-desc">Scroll down in the share sheet and tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>. The BCSC icon will appear on your home screen like a regular app.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🟢</div>
+        <div class="step-body">
+          <div class="step-title">Wait for the green "Live" indicator</div>
+          <div class="step-desc">When you open the app, wait for the top-right corner to show <strong>Live</strong> with a green dot before entering any data. This confirms it's connected and syncing.</div>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">💡</div>
+      <div class="tip-text"><strong>Tip:</strong> If it shows "Syncing…" for more than 10 seconds, close the app fully and reopen it. If you see "Tap to retry" — tap it and it will reconnect automatically.</div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: THE 4 TABS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-title">The Four Tabs</div>
+    </div>
+    <div class="tab-grid">
+      <div class="tab-card">
+        <div class="tab-icon">🏆</div>
+        <div class="tab-name">Leaderboard</div>
+        <div class="tab-desc">Live Best & Fairest standings, sorted automatically by points. Shows season record (W/L/D/GF/GA/GD) at the top. Updates instantly as votes are entered.</div>
+      </div>
+      <div class="tab-card red">
+        <div class="tab-icon">📅</div>
+        <div class="tab-name">Fixture</div>
+        <div class="tab-desc">Full 18-round schedule. Shows season stats at the top. Tap any game to enter the result and score. Completed games show green on the left.</div>
+      </div>
+      <div class="tab-card green">
+        <div class="tab-icon">🗳️</div>
+        <div class="tab-name">Votes</div>
+        <div class="tab-desc">Enter votes after each game. Select the round, mark attendance, assign 1st–5th, tally goals, then hit Save. Both coaches can enter votes — last save wins.</div>
+      </div>
+      <div class="tab-card gold">
+        <div class="tab-icon">👕</div>
+        <div class="tab-name">Squad</div>
+        <div class="tab-desc">Full player list with current Best & Fairest points and goals tally for the season.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: ENTERING VOTES -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-title">How to Enter Votes After a Game</div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon">🗳️</div>
+        <div class="step-body">
+          <div class="step-title">Go to the Votes tab</div>
+          <div class="step-desc">Tap the <strong>Votes</strong> icon in the bottom nav bar.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🔢</div>
+        <div class="step-body">
+          <div class="step-title">Select the round</div>
+          <div class="step-desc">Tap the correct round pill at the top (e.g. <strong>R4</strong>). Rounds that already have votes saved show with a green border.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">✅</div>
+        <div class="step-body">
+          <div class="step-title">Mark attendance</div>
+          <div class="step-desc">For each player, toggle the <strong>Played</strong> switch on if they were at the game. This counts their games played total.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🥇</div>
+        <div class="step-body">
+          <div class="step-title">Assign votes 1st through 5th</div>
+          <div class="step-desc">Tap the vote button next to each player. Each placement can only be given to <strong>one player</strong> — the app will warn you if you try to double up.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">⚽</div>
+        <div class="step-body">
+          <div class="step-title">Add goals</div>
+          <div class="step-desc">Use the <strong>− / +</strong> buttons to record how many goals each player scored.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">💾</div>
+        <div class="step-body">
+          <div class="step-title">Tap Save Votes</div>
+          <div class="step-desc">Hit the red <strong>Save Votes</strong> button at the bottom. You'll see a green "Votes saved ✓" confirmation. The leaderboard updates instantly.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POINTS TABLE -->
+    <div style="margin-top:16px">
+      <table class="vote-table">
+        <thead>
+          <tr>
+            <th>Placement</th>
+            <th>Points</th>
+            <th>Tiebreaker</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="medal">🥇</span> 1st</td><td><span class="pts-badge">5 pts</span></td><td style="font-size:12px;color:var(--grey)">Counts first in all ties</td></tr>
+          <tr><td><span class="medal">🥈</span> 2nd</td><td><span class="pts-badge">4 pts</span></td><td style="font-size:12px;color:var(--grey)">Counts second in ties</td></tr>
+          <tr><td><span class="medal">🥉</span> 3rd</td><td><span class="pts-badge">3 pts</span></td><td style="font-size:12px;color:var(--grey)">Counts third in ties</td></tr>
+          <tr><td>4th</td><td><span class="pts-badge">2 pts</span></td><td style="font-size:12px;color:var(--grey)">—</td></tr>
+          <tr><td>5th</td><td><span class="pts-badge">1 pt</span></td><td style="font-size:12px;color:var(--grey)">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 4: ENTERING RESULTS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div class="section-title">How to Enter a Match Result</div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon">📅</div>
+        <div class="step-body">
+          <div class="step-title">Go to the Fixture tab</div>
+          <div class="step-desc">Tap the <strong>Fixture</strong> icon in the bottom nav bar.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">👆</div>
+        <div class="step-body">
+          <div class="step-title">Tap the game</div>
+          <div class="step-desc">Tap any game row to open the result entry screen. You can update a result at any time — tap again and change it.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🏅</div>
+        <div class="step-body">
+          <div class="step-title">Select Win, Draw or Loss</div>
+          <div class="step-desc">Tap <strong>WIN</strong>, <strong>DRAW</strong>, or <strong>LOSS</strong> — it highlights in green, gold, or red.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🔢</div>
+        <div class="step-body">
+          <div class="step-title">Enter the score and save</div>
+          <div class="step-desc">Enter <strong>BCSC Goals</strong> and <strong>Opposition</strong> goals, then tap <strong>Save Result</strong>. The fixture and season stats update immediately.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: TIPS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <div class="section-title">Good to Know</div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon">🔄</div>
+        <div class="step-body">
+          <div class="step-title">Both coaches see the same data</div>
+          <div class="step-desc">The app is live — any change one coach makes appears on the other's screen within seconds. No need to share files or screenshots.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">📵</div>
+        <div class="step-body">
+          <div class="step-title">Each team's data is completely separate</div>
+          <div class="step-desc">The Kangaroos, Wallabies and U12B apps are fully independent. Votes and results from one team never appear in another.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🔁</div>
+        <div class="step-body">
+          <div class="step-title">If the app gets stuck</div>
+          <div class="step-desc">Close the tab completely (swipe up to close Safari), reopen it, and wait for the green <strong>Live</strong> dot. A simple refresh sometimes won't reconnect — a full close always will.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-icon">✏️</div>
+        <div class="step-body">
+          <div class="step-title">You can edit votes and results any time</div>
+          <div class="step-desc">Nothing is locked. Go back to any round in Votes or any game in Fixture and update it. The leaderboard and stats recalculate instantly.</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">
+      <div class="note-text"><strong>Questions or changes needed?</strong> Contact Nathan — player names, fixture updates, or any new features can be added quickly without affecting any existing data.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong>BCSC Best & Fairest App · Season 2026</strong> &nbsp;·&nbsp; Berwick Churches Soccer Club &nbsp;·&nbsp; Built for coaches, by coaches
+</div>
+
+</body>
+</html>
