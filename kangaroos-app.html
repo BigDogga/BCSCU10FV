@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -242,84 +241,53 @@ var selectedRound=1,modalRound=null,selectedResult=null,pendingVotes={};
 
 function safeName(n){return n.replace(/[^a-zA-Z0-9]/g,'_');}
 
-function initDB(){
-  db.ref('fixture').once('value',function(snap){
-    if(!snap.exists()){
+// ── INSTANT RENDER from local data — never shows loading screen ────────
+FIXTURE.forEach(function(f){
+  state.fixture['rnd'+f.rnd]={rnd:f.rnd,date:f.date,opp:f.opp,ha:f.ha,time:f.time,result:null,gf:null,ga:null};
+});
+renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
+
+// ── FIREBASE SYNC in background ────────────────────────────────────────
+function setStatus(live,label){
+  var dot=document.getElementById('connDot'),lbl=document.getElementById('connLabel');
+  if(live){dot.classList.add('live');}else{dot.classList.remove('live');}
+  lbl.textContent=label;
+}
+
+function tryConnect(){
+  setStatus(false,'Syncing...');
+  db.ref('/').once('value').then(function(snap){
+    var d=snap.val()||{};
+    if(!d.fixture){
       var fd={};
       FIXTURE.forEach(function(f){fd['rnd'+f.rnd]={rnd:f.rnd,date:f.date,opp:f.opp,ha:f.ha,time:f.time,result:null,gf:null,ga:null};});
-      db.ref('fixture').set(fd);
-      db.ref('votes').set({});
+      return db.ref('fixture').set(fd).then(function(){return db.ref('votes').set({});}).then(function(){return db.ref('/').once('value');});
     }
+    return snap;
+  }).then(function(snap){
+    var d=snap.val()||{};
+    state.fixture=d.fixture||state.fixture;
+    state.votes=d.votes||{};
+    setStatus(true,'Live');
+    renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
+    // Attach live listener now that we know connection works
+    db.ref('/').on('value',function(snap2){
+      var d2=snap2.val()||{};
+      state.fixture=d2.fixture||state.fixture;
+      state.votes=d2.votes||{};
+      setStatus(true,'Live');
+      renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
+    });
+  }).catch(function(err){
+    console.warn('Firebase failed:',err.code,err.message);
+    setStatus(false,'Tap to retry');
+    document.getElementById('connLabel').style.cursor='pointer';
+    document.getElementById('connLabel').onclick=function(){tryConnect();};
+    setTimeout(tryConnect,10000);
   });
 }
 
-// ── ROBUST CONNECTION HANDLER ──────────────────────────────────────────
-var _listener=null, _retryTimer=null, _retryCount=0, _connected=false;
-
-function setConnected(yes){
-  _connected=yes;
-  var dot=document.getElementById('connDot'),lbl=document.getElementById('connLabel');
-  if(yes){dot.classList.add('live');lbl.textContent='Live';}
-  else{dot.classList.remove('live');lbl.textContent=_retryCount>0?'Retrying…':'Connecting…';}
-}
-
-function renderAll(d){
-  state.fixture=d.fixture||{};
-  state.votes=d.votes||{};
-  renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
-}
-
-function attachListener(){
-  // Remove old listener if any
-  if(_listener){db.ref('/').off('value',_listener);_listener=null;}
-  clearTimeout(_retryTimer);
-
-  _listener=function(snap){
-    _retryCount=0;
-    setConnected(true);
-    renderAll(snap.val()||{});
-  };
-
-  db.ref('/').on('value',_listener,function(err){
-    // Error callback — detach and retry
-    console.warn('Firebase error, retrying…',err);
-    setConnected(false);
-    if(_listener){db.ref('/').off('value',_listener);_listener=null;}
-    scheduleRetry();
-  });
-
-  // If no data arrives within 6 seconds, force a once() fetch and retry listener
-  _retryTimer=setTimeout(function(){
-    if(!_connected){
-      console.warn('No data in 6s, forcing once() fetch…');
-      db.ref('/').once('value').then(function(snap){
-        if(snap.exists()){
-          setConnected(true);
-          renderAll(snap.val()||{});
-          _retryCount=0;
-        }else{scheduleRetry();}
-      }).catch(function(){scheduleRetry();});
-    }
-  },6000);
-}
-
-function scheduleRetry(){
-  _retryCount++;
-  var delay=Math.min(3000*_retryCount,15000); // 3s, 6s, 9s… max 15s
-  setConnected(false);
-  _retryTimer=setTimeout(function(){attachListener();},delay);
-}
-
-// Watch real connection state from Firebase itself
-db.ref('.info/connected').on('value',function(snap){
-  if(!snap.val()&&_connected){
-    setConnected(false);
-    scheduleRetry();
-  }
-});
-
-// Kick off
-attachListener();
+setTimeout(tryConnect,400);
 
 function calcStats(){
   var s={};
@@ -510,7 +478,6 @@ function showPage(name,btn){
   document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');
 }
 
-initDB();
 </script>
 </body>
 </html>
