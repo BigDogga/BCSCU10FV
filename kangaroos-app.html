@@ -126,9 +126,12 @@ input[type=number]{-moz-appearance:textfield;}
       <div class="header-logo">BCSC <span>KANGAROOS</span></div>
       <div class="header-sub">FV U10 · 2026</div>
     </div>
-    <div style="margin-left:auto;display:flex;align-items:center">
-      <span class="conn-dot" id="connDot"></span>
-      <span class="conn-label" id="connLabel">Connecting…</span>
+    <div style="margin-left:auto;text-align:right">
+      <div style="display:flex;align-items:center;justify-content:flex-end">
+        <span class="conn-dot" id="connDot"></span>
+        <span class="conn-label" id="connLabel">Connecting…</span>
+      </div>
+      <div id="syncTime" style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px"></div>
     </div>
   </div>
 </div>
@@ -248,47 +251,101 @@ FIXTURE.forEach(function(f){
 });
 renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
 
-// ── FIREBASE SYNC in background ────────────────────────────────────────
+// ── FIREBASE SYNC ─────────────────────────────────────────────────────
+var _liveListener=null;
+
 function setStatus(live,label){
   var dot=document.getElementById('connDot'),lbl=document.getElementById('connLabel');
   if(live){dot.classList.add('live');}else{dot.classList.remove('live');}
   lbl.textContent=label;
+  lbl.style.cursor=live?'default':'pointer';
 }
 
-function tryConnect(){
-  setStatus(false,'Syncing...');
-  db.ref('/').once('value').then(function(snap){
-    var d=snap.val()||{};
-    if(!d.fixture){
-      var fd={};
-      FIXTURE.forEach(function(f){fd['rnd'+f.rnd]={rnd:f.rnd,date:f.date,opp:f.opp,ha:f.ha,time:f.time,result:null,gf:null,ga:null};});
-      return db.ref('fixture').set(fd).then(function(){return db.ref('votes').set({});}).then(function(){return db.ref('/').once('value');});
-    }
-    return snap;
-  }).then(function(snap){
+function updateSyncTime(){
+  var el=document.getElementById('syncTime');
+  if(el){
+    var now=new Date();
+    var h=now.getHours(),m=now.getMinutes();
+    var ampm=h>=12?'pm':'am';
+    h=h%12||12;
+    el.textContent='Synced '+h+':'+(m<10?'0':'')+m+ampm;
+  }
+}
+
+function detachListener(){
+  if(_liveListener){
+    db.ref('/').off('value',_liveListener);
+    _liveListener=null;
+  }
+}
+
+function attachLiveListener(){
+  detachListener();
+  _liveListener=function(snap){
     var d=snap.val()||{};
     state.fixture=d.fixture||state.fixture;
     state.votes=d.votes||{};
     setStatus(true,'Live');
+    updateSyncTime();
     renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
-    // Attach live listener now that we know connection works
-    db.ref('/').on('value',function(snap2){
-      var d2=snap2.val()||{};
-      state.fixture=d2.fixture||state.fixture;
-      state.votes=d2.votes||{};
-      setStatus(true,'Live');
-      renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
-    });
-  }).catch(function(err){
-    console.warn('Firebase failed:',err.code,err.message);
+  };
+  db.ref('/').on('value',_liveListener,function(err){
+    console.warn('Live listener error:',err.code);
+    detachListener();
     setStatus(false,'Tap to retry');
-    document.getElementById('connLabel').style.cursor='pointer';
     document.getElementById('connLabel').onclick=function(){tryConnect();};
-    setTimeout(tryConnect,10000);
   });
 }
 
-setTimeout(tryConnect,400);
+function tryConnect(){
+  setStatus(false,'Syncing...');
+  // Force a fresh connection by going to once() first
+  // This bypasses any stale WebSocket from a previous page load
+  firebase.database().goOffline();
+  setTimeout(function(){
+    firebase.database().goOnline();
+    db.ref('/').once('value').then(function(snap){
+      var d=snap.val()||{};
+      if(!d.fixture){
+        var fd={};
+        FIXTURE.forEach(function(f){fd['rnd'+f.rnd]={rnd:f.rnd,date:f.date,opp:f.opp,ha:f.ha,time:f.time,result:null,gf:null,ga:null};});
+        return db.ref('fixture').set(fd)
+          .then(function(){return db.ref('votes').set({});})
+          .then(function(){return db.ref('/').once('value');});
+      }
+      return snap;
+    }).then(function(snap){
+      var d=snap.val()||{};
+      state.fixture=d.fixture||state.fixture;
+      state.votes=d.votes||{};
+      setStatus(true,'Live');
+      updateSyncTime();
+      renderLeaderboard();renderFixture();renderVotesRoundSelector();renderVotePlayers();renderSquad();
+      attachLiveListener();
+    }).catch(function(err){
+      console.warn('Firebase failed:',err.code,err.message);
+      setStatus(false,'Tap to retry');
+      document.getElementById('connLabel').onclick=function(){tryConnect();};
+      setTimeout(tryConnect,10000);
+    });
+  },300);
+}
+
+// Re-sync when tab becomes visible again (fixes background throttle issue)
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'){
+    detachListener();
+    tryConnect();
+  }
+});
+
+// Clean disconnect on page unload so next load gets a fresh connection
+window.addEventListener('beforeunload',function(){
+  detachListener();
+  firebase.database().goOffline();
+});
+
+setTimeout(tryConnect,300);
 
 function calcStats(){
   var s={};
