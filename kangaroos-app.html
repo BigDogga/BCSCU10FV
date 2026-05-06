@@ -36,10 +36,10 @@ body{font-family:'Barlow',sans-serif;background:var(--dark);color:var(--white);m
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;margin-bottom:4px;}
 .section-sub{font-size:13px;color:var(--grey);margin-bottom:16px;}
-.stats-strip{display:flex;gap:8px;margin-bottom:16px;}
-.stat-box{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 8px;text-align:center;}
-.stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;line-height:1;}
-.stat-lbl{font-size:10px;color:var(--grey);letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+.stats-strip{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.stat-box{flex:1;min-width:44px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px 6px;text-align:center;}
+.stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;line-height:1;}
+.stat-lbl{font-size:9px;color:var(--grey);letter-spacing:0.3px;text-transform:uppercase;margin-top:3px;}
 .stat-w{color:var(--green);}.stat-l{color:var(--red);}.stat-d{color:var(--gold);}
 .lb-row{display:flex;align-items:center;padding:10px 14px;border-radius:12px;margin-bottom:6px;gap:12px;animation:slideIn 0.3s ease both;}
 @keyframes slideIn{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:translateX(0);}}
@@ -143,6 +143,7 @@ input[type=number]{-moz-appearance:textfield;}
 <div id="page-fixture" class="page">
   <div class="section-title">Fixture</div>
   <div class="section-sub">Tap a game to enter result</div>
+  <div id="fix-stats" class="stats-strip"></div>
   <div id="fixture-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
 </div>
 
@@ -308,23 +309,39 @@ function calcStats(){
   return Object.values(s).sort(function(a,b){return b.pts-a.pts||b.v1-a.v1||b.v2-a.v2||b.v3-a.v3||a.name.localeCompare(b.name);});
 }
 
+function calcTeamStats(){
+  var w=0,l=0,d=0,gf=0,ga=0,gp=0;
+  Object.values(state.fixture).forEach(function(f){
+    if(f.result==='W'){w++;gp++;}
+    else if(f.result==='L'){l++;gp++;}
+    else if(f.result==='D'){d++;gp++;}
+    if(f.gf)gf+=Number(f.gf);
+    if(f.ga)ga+=Number(f.ga);
+  });
+  return {w:w,l:l,d:d,gf:gf,ga:ga,gd:gf-ga,gp:gp};
+}
+
+function teamStatsHTML(ts){
+  var gdCol=ts.gd>0?'stat-w':ts.gd<0?'stat-l':'';
+  var gdStr=(ts.gd>0?'+':'')+ts.gd;
+  return '<div class="stat-box"><div class="stat-val">'+ts.gp+'</div><div class="stat-lbl">Played</div></div>'+
+    '<div class="stat-box"><div class="stat-val stat-w">'+ts.w+'</div><div class="stat-lbl">Won</div></div>'+
+    '<div class="stat-box"><div class="stat-val stat-l">'+ts.l+'</div><div class="stat-lbl">Lost</div></div>'+
+    '<div class="stat-box"><div class="stat-val stat-d">'+ts.d+'</div><div class="stat-lbl">Drawn</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+ts.gf+'</div><div class="stat-lbl">GF</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+ts.ga+'</div><div class="stat-lbl">GA</div></div>'+
+    '<div class="stat-box"><div class="stat-val '+gdCol+'">'+gdStr+'</div><div class="stat-lbl">GD</div></div>';
+}
+
 function renderLeaderboard(){
   var sorted=calcStats();
   var med=['🥇','🥈','🥉'],cls=['lb-1','lb-2','lb-3'];
-  var w=0,l=0,d=0,gf=0;
-  Object.values(state.fixture).forEach(function(f){
-    if(f.result==='W')w++;else if(f.result==='L')l++;else if(f.result==='D')d++;
-    if(f.gf)gf+=Number(f.gf);
-  });
-  document.getElementById('lb-stats').innerHTML=
-    '<div class="stat-box"><div class="stat-val stat-w">'+w+'</div><div class="stat-lbl">Wins</div></div>'+
-    '<div class="stat-box"><div class="stat-val stat-l">'+l+'</div><div class="stat-lbl">Losses</div></div>'+
-    '<div class="stat-box"><div class="stat-val stat-d">'+d+'</div><div class="stat-lbl">Draws</div></div>'+
-    '<div class="stat-box"><div class="stat-val">'+gf+'</div><div class="stat-lbl">Goals</div></div>';
+  var ts=calcTeamStats();
+  document.getElementById('lb-stats').innerHTML=teamStatsHTML(ts);
   var html='';
   sorted.forEach(function(p,i){
-    var r=i+1,c=r<=3?cls[i]:'lb-other',m=r<=3?med[i]:'<span style="font-family:\'Barlow Condensed\';font-weight:900;font-size:16px;color:var(--grey)">'+r+'</span>';
-    html+='<div class="lb-row '+c+'" style="animation-delay:'+(i*0.04)+'s">'+
+    var r=i+1,cc=r<=3?cls[i]:'lb-other',m=r<=3?med[i]:'<span style="font-family:\'Barlow Condensed\';font-weight:900;font-size:16px;color:var(--grey)">'+r+'</span>';
+    html+='<div class="lb-row '+cc+'" style="animation-delay:'+(i*0.04)+'s">'+
       '<div class="lb-medal">'+m+'</div>'+
       '<div style="flex:1"><div class="lb-name">'+p.name+'</div>'+
       '<div class="lb-detail"><span class="lb-pip">🥇 '+p.v1+'</span><span class="lb-pip">🥈 '+p.v2+'</span><span class="lb-pip">🥉 '+p.v3+'</span><span class="lb-pip">⚽ '+p.goals+'</span><span class="lb-pip">'+p.games+' gms</span></div></div>'+
@@ -336,13 +353,15 @@ function renderLeaderboard(){
 function renderFixture(){
   var fix=state.fixture;
   if(!fix||!Object.keys(fix).length)return;
+  var ts=calcTeamStats();
+  document.getElementById('fix-stats').innerHTML=teamStatsHTML(ts);
   var sorted=Object.values(fix).sort(function(a,b){return a.rnd-b.rnd;});
   var html='';
   sorted.forEach(function(f){
-    var sh='',rc='';
+    var sh='';
     if(f.result){
       var sc=(f.gf||0)+' – '+(f.ga||0);
-      rc=f.result==='W'?'score-w':f.result==='L'?'score-l':'score-d';
+      var rc=f.result==='W'?'score-w':f.result==='L'?'score-l':'score-d';
       sh='<div class="fixture-score '+rc+'">'+sc+'<div style="font-size:11px;font-weight:700">'+f.result+'</div></div>';
     }else{sh='<div class="score-tbc">'+f.time+'</div>';}
     html+='<div class="fixture-row'+(f.result?' played':'')+'" onclick="openResultModal('+f.rnd+')">'+
@@ -352,7 +371,6 @@ function renderFixture(){
   });
   document.getElementById('fixture-list').innerHTML=html;
 }
-
 function renderVotesRoundSelector(){
   var html='';
   FIXTURE.forEach(function(f){
