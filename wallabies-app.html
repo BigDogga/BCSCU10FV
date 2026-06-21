@@ -361,16 +361,18 @@ function syncFixtureUpdate(){
   var updates={};
   FIXTURE.forEach(function(f){
     if(f.rnd>=7){
-      updates['fixture/rnd'+f.rnd+'/date']=f.date;
-      updates['fixture/rnd'+f.rnd+'/opp']=f.opp;
-      updates['fixture/rnd'+f.rnd+'/ha']=f.ha;
-      updates['fixture/rnd'+f.rnd+'/time']=f.time;
+      updates['wallabies/fixture/rnd'+f.rnd+'/date']=f.date;
+      updates['wallabies/fixture/rnd'+f.rnd+'/opp']=f.opp;
+      updates['wallabies/fixture/rnd'+f.rnd+'/ha']=f.ha;
+      updates['wallabies/fixture/rnd'+f.rnd+'/time']=f.time;
     }
   });
   // Remove rounds that no longer exist (now byes) - e.g. old R18
   for(var r=7;r<=18;r++){
-    if(newRounds.indexOf(r)===-1)updates['fixture/rnd'+r]=null;
+    if(newRounds.indexOf(r)===-1)updates['wallabies/fixture/rnd'+r]=null;
   }
+  // Clean up stray root-level fixture node from a previous mis-targeted sync attempt, if present
+  updates['fixture']=null;
   db.ref().update(updates).then(function(){
     alert('Fixture updated! Rounds 7+ now show the new FV schedule.');
     tryConnect();
