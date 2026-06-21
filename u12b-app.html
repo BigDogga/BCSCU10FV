@@ -118,37 +118,9 @@ body{font-family:'Barlow',sans-serif;background:var(--dark);color:var(--white);m
 .toast.error{background:var(--red);}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
 input[type=number]{-moz-appearance:textfield;}
-/* PIN LOCK */
-#pin-screen{position:fixed;inset:0;background:var(--dark);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
-#pin-screen.hidden{display:none;}
-.pin-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:36px;color:var(--white);margin-bottom:4px;}
-.pin-logo span{color:var(--red);}
-.pin-sub{font-size:13px;color:var(--grey);margin-bottom:36px;letter-spacing:1px;text-transform:uppercase;}
-.pin-label{font-size:13px;color:var(--grey);margin-bottom:10px;}
-.pin-input-wrap{position:relative;width:100%;max-width:280px;margin-bottom:12px;}
-.pin-input{width:100%;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);border-radius:12px;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;text-align:center;padding:14px 44px 14px 16px;letter-spacing:3px;outline:none;}
-.pin-input:focus{border-color:var(--blue-mid);}
-.pin-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;user-select:none;}
-.pin-btn{width:100%;max-width:280px;padding:16px;border-radius:14px;border:none;background:var(--red);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;transition:opacity 0.15s;}
-.pin-btn:active{opacity:0.8;}
-.pin-error{color:var(--red);font-size:13px;margin-top:10px;min-height:18px;}
 </style>
 </head>
 <body>
-
-<!-- PIN LOCK SCREEN -->
-<div id="pin-screen">
-  <div style="font-size:48px;margin-bottom:8px">🦘</div>
-  <div class="pin-logo">BCSC <span>U12B</span></div>
-  <div class="pin-sub">Coaches Access</div>
-  <div class="pin-label">Enter access code</div>
-  <div class="pin-input-wrap">
-    <input class="pin-input" type="password" id="pin-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPin()">
-    <span class="pin-eye" id="pin-eye" onclick="togglePinVis()">👁️</span>
-  </div>
-  <button class="pin-btn" onclick="checkPin()">ENTER</button>
-  <div class="pin-error" id="pin-error"></div>
-</div>
 
 <div class="header">
   <div class="header-inner">
@@ -239,51 +211,24 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="toast" id="toast"></div>
 
 <script>
-// PIN LOCK
-var PIN_CORRECT='BCSC2026';
-var SESSION_KEY='bcsc_u12b_auth';
-function checkPin(){
-  var v=document.getElementById('pin-input').value.trim();
-  if(v===PIN_CORRECT){
-    localStorage.setItem(SESSION_KEY,'1');
-    document.getElementById('pin-screen').classList.add('hidden');
-    document.getElementById('pin-error').textContent='';
-  } else {
-    document.getElementById('pin-error').textContent='Incorrect code. Try again.';
-    document.getElementById('pin-input').value='';
-    document.getElementById('pin-input').focus();
-  }
-}
-function togglePinVis(){
-  var inp=document.getElementById('pin-input');
-  inp.type=inp.type==='password'?'text':'password';
-}
-(function(){
-  if(localStorage.getItem(SESSION_KEY)==='1'){
-    document.getElementById('pin-screen').classList.add('hidden');
-  }
-})();
-
-var PLAYERS=["Julian Anthony","Avishka Bandaranayake","Cooper Barrot","Henry Doty","Lachlan Ellis","Charlie Huang","Adrian Larue","Miles Moothoosawmy","Logan Prins","Oscah Ragoobeer","Millan Rahimi","Ayden Sakutukwa","Jeriah Sonia"];
+var PLAYERS=["Julian Anthony","Avishka Bandaranayake","Cooper Barrot","Lachlan Ellis","Charlie Huang","Adrian Larue","Miles Moothoosawmy","Logan Prins","Oscah Ragoobeer","Millan Rahimi","Ayden Sakutukwa","Jeriah Sonia"];
 var FIXTURE=[
-  {rnd:1, date:"25/04/2026",opp:"Chelsea FC (Foxes)",      ha:"Away",time:"9:00 AM"},
-  {rnd:2, date:"02/05/2026",opp:"Mornington",               ha:"Home",time:"9:00 AM"},
-  {rnd:3, date:"09/05/2026",opp:"Peninsula Strikers (Boas)",ha:"Away",time:"9:00 AM"},
-  {rnd:4, date:"16/05/2026",opp:"Seaford United",           ha:"Home",time:"9:00 AM"},
-  {rnd:5, date:"23/05/2026",opp:"Mount Eliza (Red)",        ha:"Away",time:"9:00 AM"},
-  {rnd:6, date:"30/05/2026",opp:"Chelsea FC (Raptors)",     ha:"Away",time:"9:00 AM"},
-  {rnd:7, date:"13/06/2026",opp:"Berwick City (Bears)",     ha:"Home",time:"9:00 AM"},
-  {rnd:8, date:"20/06/2026",opp:"Chelsea FC (Foxes)",       ha:"Home",time:"9:00 AM"},
-  {rnd:9, date:"27/06/2026",opp:"Mornington",               ha:"Away",time:"9:00 AM"},
-  {rnd:10,date:"11/07/2026",opp:"Peninsula Strikers (Boas)",ha:"Home",time:"9:00 AM"},
-  {rnd:11,date:"18/07/2026",opp:"Seaford United",           ha:"Away",time:"9:00 AM"},
+  {rnd:1, date:"25/04/2026",opp:"Chelsea FC (Foxes)",      ha:"Away",time:"12:00 PM"},
+  {rnd:2, date:"02/05/2026",opp:"Mornington",               ha:"Home",time:"10:00 AM"},
+  {rnd:3, date:"09/05/2026",opp:"Peninsula Strikers (Boas)",ha:"Away",time:"10:00 AM"},
+  {rnd:4, date:"16/05/2026",opp:"Seaford United",           ha:"Home",time:"10:00 AM"},
+  {rnd:5, date:"23/05/2026",opp:"Mount Eliza (Red)",        ha:"Away",time:"10:00 AM"},
+  {rnd:6, date:"30/05/2026",opp:"Chelsea FC (Raptors)",     ha:"Away",time:"11:00 AM"},
+  {rnd:7, date:"13/06/2026",opp:"Berwick City (Bears)",     ha:"Home",time:"10:00 AM"},
+  {rnd:8, date:"20/06/2026",opp:"Chelsea FC (Foxes)",       ha:"Away",time:"12:00 PM"},
+  {rnd:9, date:"27/06/2026",opp:"Mornington",               ha:"Home",time:"10:00 AM"},
+  {rnd:10,date:"11/07/2026",opp:"Peninsula Strikers (Boas)",ha:"Away",time:"9:30 AM"},
   {rnd:12,date:"25/07/2026",opp:"Mount Eliza (Red)",        ha:"Home",time:"9:00 AM"},
-  {rnd:13,date:"01/08/2026",opp:"Chelsea FC (Raptors)",     ha:"Home",time:"9:00 AM"},
-  {rnd:14,date:"08/08/2026",opp:"Berwick City (Bears)",     ha:"Away",time:"9:00 AM"},
-  {rnd:15,date:"15/08/2026",opp:"Chelsea FC (Foxes)",       ha:"Away",time:"9:00 AM"},
-  {rnd:16,date:"22/08/2026",opp:"Mornington",               ha:"Home",time:"9:00 AM"},
-  {rnd:17,date:"29/08/2026",opp:"Peninsula Strikers (Boas)",ha:"Away",time:"9:00 AM"},
-  {rnd:18,date:"05/09/2026",opp:"Seaford United",           ha:"Home",time:"9:00 AM"}
+  {rnd:14,date:"08/08/2026",opp:"Berwick City (Bears)",     ha:"Away",time:"12:00 PM"},
+  {rnd:15,date:"15/08/2026",opp:"Chelsea FC (Foxes)",       ha:"Home",time:"10:00 AM"},
+  {rnd:16,date:"22/08/2026",opp:"Mornington",               ha:"Away",time:"10:00 AM"},
+  {rnd:17,date:"29/08/2026",opp:"Peninsula Strikers (Boas)",ha:"Home",time:"9:00 AM"},
+  {rnd:18,date:"05/09/2026",opp:"Skye United FC",           ha:"Away",time:"9:00 AM"}
 ];
 
 firebase.initializeApp({
@@ -406,6 +351,48 @@ window.addEventListener('beforeunload',function(){
 });
 
 setTimeout(tryConnect,300);
+
+// ── ONE-TIME FIXTURE SYNC (after FV restructure) ───────────────────────
+// Pushes updated opponent/date/time for round 7 onward into Firebase.
+// Leaves rounds 1-6 (already played) and ALL votes completely untouched.
+// Only writes date/opp/ha/time fields - preserves any result/gf/ga already saved.
+function syncFixtureUpdate(){
+  if(!confirm('Push updated FV fixture (Round 7 onward) to Firebase?\n\nRounds 1-6 and all votes will NOT be touched.\n\nThis only needs to be done ONCE.'))return;
+  var newRounds=FIXTURE.map(function(f){return f.rnd;});
+  var updates={};
+  FIXTURE.forEach(function(f){
+    if(f.rnd>=7){
+      updates['fixture/rnd'+f.rnd+'/date']=f.date;
+      updates['fixture/rnd'+f.rnd+'/opp']=f.opp;
+      updates['fixture/rnd'+f.rnd+'/ha']=f.ha;
+      updates['fixture/rnd'+f.rnd+'/time']=f.time;
+    }
+  });
+  // Remove rounds that no longer exist (now byes) - e.g. old R11, R13
+  for(var r=7;r<=18;r++){
+    if(newRounds.indexOf(r)===-1)updates['fixture/rnd'+r]=null;
+  }
+  db.ref().update(updates).then(function(){
+    alert('Fixture updated! Rounds 7+ now show the new FV schedule.');
+    tryConnect();
+  }).catch(function(err){
+    alert('Sync failed: '+err.message);
+  });
+}
+// Long-press the connection dot (top of app) 1.5s to trigger sync.
+(function(){
+  var dot=document.getElementById('connDot');
+  if(!dot)return;
+  var t=null;
+  function start(){t=setTimeout(syncFixtureUpdate,1500);}
+  function cancel(){if(t)clearTimeout(t);}
+  dot.addEventListener('touchstart',start);
+  dot.addEventListener('touchend',cancel);
+  dot.addEventListener('touchmove',cancel);
+  dot.addEventListener('mousedown',start);
+  dot.addEventListener('mouseup',cancel);
+  dot.addEventListener('mouseleave',cancel);
+})();
 
 function calcStats(){
   var s={};
