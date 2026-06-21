@@ -136,6 +136,7 @@ input[type=number]{-moz-appearance:textfield;}
       </div>
       <div id="syncTime" style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px"></div>
     </div>
+      <button id="fixtureSyncBtn" onclick="syncFixtureUpdate()" style="margin-left:10px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;font-size:16px;text-decoration:none;flex-shrink:0;cursor:pointer;" title="Sync Updated Fixture">↻</button>
       <a href="https://bigdogga.github.io/BCSCU10FV/bcsc-coach-guide.html" target="_blank" style="margin-left:10px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;font-size:15px;font-weight:900;text-decoration:none;flex-shrink:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0" title="Coach Guide">?</a>
   </div>
 </div>
@@ -377,20 +378,7 @@ function syncFixtureUpdate(){
     alert('Sync failed: '+err.message);
   });
 }
-// Long-press the connection dot (top of app) 1.5s to trigger sync.
-(function(){
-  var dot=document.getElementById('connDot');
-  if(!dot)return;
-  var t=null;
-  function start(){t=setTimeout(syncFixtureUpdate,1500);}
-  function cancel(){if(t)clearTimeout(t);}
-  dot.addEventListener('touchstart',start);
-  dot.addEventListener('touchend',cancel);
-  dot.addEventListener('touchmove',cancel);
-  dot.addEventListener('mousedown',start);
-  dot.addEventListener('mouseup',cancel);
-  dot.addEventListener('mouseleave',cancel);
-})();
+// Sync button is wired via onclick in the header HTML (id=fixtureSyncBtn)
 
 function calcStats(){
   var s={};
