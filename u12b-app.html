@@ -212,7 +212,7 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="toast" id="toast"></div>
 
 <script>
-var PLAYERS=["Julian Anthony","Avishka Bandaranayake","Cooper Barrot","Lachlan Ellis","Charlie Huang","Adrian Larue","Miles Moothoosawmy","Logan Prins","Oscah Ragoobeer","Millan Rahimi","Ayden Sakutukwa","Jeriah Sonia"];
+var PLAYERS=["Julian Anthony","Avishka Bandaranayake","Cooper Barrot","Henry Doty","Lachlan Ellis","Charlie Huang","Adrian Larue","Miles Moothoosawmy","Logan Prins","Oscah Ragoobeer","Millan Rahimi","Ayden Sakutukwa","Jeriah Sonia"];
 var FIXTURE=[
   {rnd:1, date:"25/04/2026",opp:"Chelsea FC (Foxes)",      ha:"Away",time:"12:00 PM"},
   {rnd:2, date:"02/05/2026",opp:"Mornington",               ha:"Home",time:"10:00 AM"},
@@ -363,16 +363,18 @@ function syncFixtureUpdate(){
   var updates={};
   FIXTURE.forEach(function(f){
     if(f.rnd>=7){
-      updates['fixture/rnd'+f.rnd+'/date']=f.date;
-      updates['fixture/rnd'+f.rnd+'/opp']=f.opp;
-      updates['fixture/rnd'+f.rnd+'/ha']=f.ha;
-      updates['fixture/rnd'+f.rnd+'/time']=f.time;
+      updates['u12b/fixture/rnd'+f.rnd+'/date']=f.date;
+      updates['u12b/fixture/rnd'+f.rnd+'/opp']=f.opp;
+      updates['u12b/fixture/rnd'+f.rnd+'/ha']=f.ha;
+      updates['u12b/fixture/rnd'+f.rnd+'/time']=f.time;
     }
   });
   // Remove rounds that no longer exist (now byes) - e.g. old R11, R13
   for(var r=7;r<=18;r++){
-    if(newRounds.indexOf(r)===-1)updates['fixture/rnd'+r]=null;
+    if(newRounds.indexOf(r)===-1)updates['u12b/fixture/rnd'+r]=null;
   }
+  // Clean up stray root-level fixture node from a previous mis-targeted sync attempt, if present
+  updates['fixture']=null;
   db.ref().update(updates).then(function(){
     alert('Fixture updated! Rounds 7+ now show the new FV schedule.');
     tryConnect();
