@@ -136,6 +136,7 @@ input[type=number]{-moz-appearance:textfield;}
       </div>
       <div id="syncTime" style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px"></div>
     </div>
+      <button onclick="exportBackup()" style="margin-left:10px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;font-size:15px;cursor:pointer;flex-shrink:0" title="Download Backup">⬇</button>
       <a href="https://bigdogga.github.io/BCSCU10FV/bcsc-coach-guide.html" target="_blank" style="margin-left:10px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;font-size:15px;font-weight:900;text-decoration:none;flex-shrink:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0" title="Coach Guide">?</a>
   </div>
 </div>
@@ -350,6 +351,37 @@ window.addEventListener('beforeunload',function(){
 setTimeout(tryConnect,300);
 
 
+// ── AUTO BACKUP ──────────────────────────────────────────────────────────
+// Every time a result or votes are saved, a dated snapshot of this team's
+// full data is written to backups/kangaroos/YYYY-MM-DD in Firebase
+// (one rolling snapshot per day). If live data is ever lost, restore from
+// the most recent snapshot.
+var _backupTimer=null;
+function snapshotBackup(){
+  if(_backupTimer)clearTimeout(_backupTimer);
+  _backupTimer=setTimeout(function(){
+    Promise.all([db.ref('fixture').once('value'),db.ref('votes').once('value')]).then(function(snaps){
+    var data={fixture:snaps[0].val(),votes:snaps[1].val()};
+    if(!data.fixture)return;
+    var day=new Date().toISOString().slice(0,10);
+    db.ref('backups/kangaroos/'+day).set(data);
+  });
+  },3000);
+}
+function exportBackup(){
+  Promise.all([db.ref('fixture').once('value'),db.ref('votes').once('value')]).then(function(snaps){
+    var data={fixture:snaps[0].val(),votes:snaps[1].val()};
+    if(!data.fixture)return;
+    var day=new Date().toISOString().slice(0,10);
+    var blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='kangaroos-backup-'+day+'.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    showToast('Backup downloaded \u2713');
+  });
+}
+
 function calcStats(){
   var s={};
   PLAYERS.forEach(function(p){s[p]={name:p,pts:0,v1:0,v2:0,v3:0,v4:0,v5:0,goals:0,games:0};});
@@ -530,7 +562,7 @@ function saveResult(){
   if(!selectedResult){showToast('Select W / D / L first',true);return;}
   var rk='rnd'+modalRound,gf=parseInt(document.getElementById('gf-input').value)||0,ga=parseInt(document.getElementById('ga-input').value)||0;
   db.ref('fixture/'+rk).update({result:selectedResult,gf:gf,ga:ga},function(err){
-    if(err)showToast('Save failed ✗',true);else{closeModal();showToast('Result saved ✓');}
+    if(err)showToast('Save failed ✗',true);else{closeModal();showToast('Result saved ✓');snapshotBackup();}
   });
 }
 
