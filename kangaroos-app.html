@@ -136,7 +136,6 @@ input[type=number]{-moz-appearance:textfield;}
       </div>
       <div id="syncTime" style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px"></div>
     </div>
-      <button id="fixtureSyncBtn" onclick="syncFixtureUpdate()" style="margin-left:10px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;font-size:16px;text-decoration:none;flex-shrink:0;flex-shrink:0;cursor:pointer;" title="Sync Updated Fixture">↻</button>
       <a href="https://bigdogga.github.io/BCSCU10FV/bcsc-coach-guide.html" target="_blank" style="margin-left:10px;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;font-size:15px;font-weight:900;text-decoration:none;flex-shrink:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:0" title="Coach Guide">?</a>
   </div>
 </div>
@@ -310,11 +309,11 @@ function tryConnect(){
     db.ref('/').once('value').then(function(snap){
       var d=snap.val()||{};
       if(!d.fixture){
-        var fd={};
-        FIXTURE.forEach(function(f){fd['rnd'+f.rnd]={rnd:f.rnd,date:f.date,opp:f.opp,ha:f.ha,time:f.time,result:null,gf:null,ga:null};});
-        return db.ref('fixture').set(fd)
-          .then(function(){return db.ref('votes').set({});})
-          .then(function(){return db.ref('/').once('value');});
+        // SAFETY: never auto-seed. An empty snapshot can mean a slow or failed
+        // connection, NOT an empty database. Auto-seeding here has wiped real
+        // match data before. If the database is genuinely empty, restore it
+        // using the restore tool - this app will never write over it.
+        throw new Error('no-data-refusing-to-seed');
       }
       return snap;
     }).then(function(snap){
@@ -350,34 +349,6 @@ window.addEventListener('beforeunload',function(){
 
 setTimeout(tryConnect,300);
 
-// ── ONE-TIME FIXTURE SYNC (after FV restructure) ───────────────────────
-// Pushes updated opponent/date/time for round 7 onward into Firebase.
-// Leaves rounds 1-6 (already played) and ALL votes completely untouched.
-// Only writes date/opp/ha/time fields - preserves any result/gf/ga already saved.
-function syncFixtureUpdate(){
-  if(!confirm('Push updated FV fixture (Round 7 onward) to Firebase?\n\nRounds 1-6 and all votes will NOT be touched.\n\nThis only needs to be done ONCE.'))return;
-  var newRounds=FIXTURE.map(function(f){return f.rnd;});
-  var updates={};
-  FIXTURE.forEach(function(f){
-    if(f.rnd>=7){
-      updates['fixture/rnd'+f.rnd+'/date']=f.date;
-      updates['fixture/rnd'+f.rnd+'/opp']=f.opp;
-      updates['fixture/rnd'+f.rnd+'/ha']=f.ha;
-      updates['fixture/rnd'+f.rnd+'/time']=f.time;
-    }
-  });
-  // Remove rounds that no longer exist (now byes) - e.g. old R9, R16
-  for(var r=7;r<=18;r++){
-    if(newRounds.indexOf(r)===-1)updates['fixture/rnd'+r]=null;
-  }
-  db.ref().update(updates).then(function(){
-    alert('Fixture updated! Rounds 7+ now show the new FV schedule.');
-    tryConnect();
-  }).catch(function(err){
-    alert('Sync failed: '+err.message);
-  });
-}
-// Sync button is wired via onclick in the header HTML (id=fixtureSyncBtn)
 
 function calcStats(){
   var s={};
