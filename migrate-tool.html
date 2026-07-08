@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BCSC Kangaroos Migration Tool</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:640px;margin:20px auto;padding:0 16px;background:#111;color:#eee}
+h1{font-size:20px}
+button{font-size:16px;padding:14px 22px;border-radius:8px;border:0;cursor:pointer;margin:6px 0;width:100%}
+#checkBtn{background:#1565c0;color:#fff}
+#copyBtn{background:#2e7d32;color:#fff;font-weight:bold}
+#deleteBtn{background:#c62828;color:#fff;font-weight:bold}
+#log{background:#000;border:1px solid #333;border-radius:8px;padding:12px;font-family:monospace;font-size:13px;white-space:pre-wrap;margin-top:14px;min-height:120px}
+.ok{color:#4caf50}.warn{color:#ffb300}.err{color:#ef5350}
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+<h1>Kangaroos Migration Tool</h1>
+<p>Moves Kangaroos (U10) data from the database root into its own <b>kangaroos/</b> folder, matching the Wallabies and U12B structure. Run the steps in order.</p>
+<button id="checkBtn" onclick="checkStructure()">1. Check current structure</button>
+<button id="copyBtn" onclick="copyData()">2. Copy root data into kangaroos/ folder</button>
+<button id="deleteBtn" onclick="deleteOldRoot()">3. Delete old root data (only after apps confirmed working)</button>
+<div id="log">Ready.</div>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCVthfbsquomLwQfz9vQLZaTS21heYp6jk",
+  authDomain:"bcsc-fvu10.firebaseapp.com",
+  databaseURL:"https://bcsc-fvu10-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"bcsc-fvu10",
+  storageBucket:"bcsc-fvu10.firebasestorage.app",
+  messagingSenderId:"421526522653",
+  appId:"1:421526522653:web:1dd14c873f66f339e72ff4"
+});
+var db=firebase.database();
+function log(msg,cls){
+  var el=document.getElementById('log');
+  el.innerHTML+='\n'+(cls?'<span class="'+cls+'">'+msg+'</span>':msg);
+}
+function ensureAuth(){
+  return firebase.auth().currentUser?Promise.resolve():firebase.auth().signInAnonymously().catch(function(e){
+    log('Anonymous sign-in unavailable ('+e.code+') - continuing without auth. If the database rules have already been locked, enable Anonymous sign-in in Firebase console first.','warn');
+  });
+}
+function summarise(label,fx,vt){
+  if(!fx){log(label+': fixture MISSING','warn');return;}
+  var results=0;Object.keys(fx).forEach(function(k){if(fx[k]&&fx[k].result)results++;});
+  log(label+': '+Object.keys(fx).length+' fixture rounds, '+results+' with results, votes for '+(vt?Object.keys(vt).length:0)+' rounds');
+}
+function checkStructure(){
+  log('Checking...');
+  ensureAuth().then(function(){
+    return Promise.all([
+      db.ref('fixture').once('value'),
+      db.ref('votes').once('value'),
+      db.ref('players').once('value'),
+      db.ref('kangaroos').once('value')
+    ]);
+  }).then(function(s){
+    var rootFx=s[0].val(),rootVt=s[1].val(),rootPl=s[2].val(),kang=s[3].val()||{};
+    log('--- ROOT (old location) ---');
+    summarise('Root',rootFx,rootVt);
+    log('Root players node: '+(rootPl?Object.keys(rootPl).length+' entries':'none'));
+    log('--- kangaroos/ (new location) ---');
+    summarise('kangaroos/',kang.fixture,kang.votes);
+    if(rootFx&&!kang.fixture)log('Status: NOT migrated yet - run step 2.','warn');
+    else if(rootFx&&kang.fixture)log('Status: copied but old root data still present - test apps, then run step 3.','warn');
+    else if(!rootFx&&kang.fixture)log('Status: migration complete.','ok');
+    else log('Status: no kangaroos data found in either location!','err');
+  }).catch(function(e){log('Check failed: '+e.message,'err');});
+}
+function copyData(){
+  ensureAuth().then(function(){
+    return Promise.all([
+      db.ref('fixture').once('value'),
+      db.ref('votes').once('value'),
+      db.ref('players').once('value'),
+      db.ref('kangaroos').once('value')
+    ]);
+  }).then(function(s){
+    var rootFx=s[0].val(),rootVt=s[1].val(),rootPl=s[2].val(),kang=s[3].val();
+    if(!rootFx){log('Nothing to copy - no fixture data at root.','err');return;}
+    if(kang&&kang.fixture){
+      var kr=0;Object.keys(kang.fixture).forEach(function(k){if(kang.fixture[k]&&kang.fixture[k].result)kr++;});
+      if(!confirm('kangaroos/ already contains data ('+Object.keys(kang.fixture).length+' rounds, '+kr+' results).\n\nOverwrite it with the root data?'))return;
+    }
+    var payload={fixture:rootFx};
+    if(rootVt)payload.votes=rootVt;
+    if(rootPl)payload.players=rootPl;
+    if(!confirm('Copy root fixture'+(rootVt?' + votes':'')+(rootPl?' + players':'')+' into kangaroos/ ?\n\nThe root originals are NOT deleted in this step.'))return;
+    db.ref('kangaroos').set(payload).then(function(){
+      return db.ref('kangaroos').once('value');
+    }).then(function(snap){
+      var k=snap.val()||{};
+      summarise('kangaroos/ (verified)',k.fixture,k.votes);
+      log('Copy complete. Now upload the new kangaroos-app.html, open it, and confirm all data shows. Then run step 3.','ok');
+    }).catch(function(e){log('Copy failed: '+e.message,'err');});
+  }).catch(function(e){log('Copy failed: '+e.message,'err');});
+}
+function deleteOldRoot(){
+  ensureAuth().then(function(){
+    return Promise.all([db.ref('kangaroos').once('value'),db.ref('fixture').once('value')]);
+  }).then(function(s){
+    var kang=s[0].val(),rootFx=s[1].val();
+    if(!kang||!kang.fixture){log('SAFETY STOP: kangaroos/ folder has no fixture data. Will not delete root originals.','err');return;}
+    if(!rootFx){log('Root fixture already gone - nothing to delete.','warn');return;}
+    if(!confirm('Delete the OLD root-level fixture, votes and players nodes?\n\nOnly do this after confirming the Kangaroos app is showing all data correctly from the new location.\n\nThe kangaroos/ copy is untouched.'))return;
+    db.ref().update({'fixture':null,'votes':null,'players':null}).then(function(){
+      log('Old root data deleted. Migration complete. Delete this tool from GitHub now.','ok');
+    }).catch(function(e){log('Delete failed: '+e.message,'err');});
+  }).catch(function(e){log('Delete failed: '+e.message,'err');});
+}
+</script>
+</body>
+</html>
