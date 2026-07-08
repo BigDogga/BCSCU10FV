@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
 :root {
   --blue:#003087;--blue-mid:#0044b8;--red:#C8102E;--white:#ffffff;
@@ -243,6 +244,10 @@ firebase.initializeApp({
   appId:"1:421526522653:web:1dd14c873f66f339e72ff4"
 });
 var db=firebase.database();
+// Sign in anonymously so database security rules (auth != null) allow access.
+function ensureAuth(){
+  return firebase.auth().currentUser?Promise.resolve():firebase.auth().signInAnonymously();
+}
 
 var state={fixture:{},votes:{}};
 var selectedRound=1,modalRound=null,selectedResult=null,pendingVotes={};
@@ -308,7 +313,9 @@ function tryConnect(){
   firebase.database().goOffline();
   setTimeout(function(){
     firebase.database().goOnline();
-    db.ref('wallabies').once('value').then(function(snap){
+    ensureAuth().then(function(){
+      return db.ref('wallabies').once('value');
+    }).then(function(snap){
       var d=snap.val()||{};
       if(!d.fixture){
         // SAFETY: never auto-seed. An empty snapshot can mean a slow or failed
